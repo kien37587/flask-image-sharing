@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <title>Image Gallery</title>
+</head>
+<body>
+    <header>
+        <h1>Image Gallery</h1>
+        <nav>
+            <a href="{{ url_for('index') }}">Home</a>
+            <a href="{{ url_for('upload') }}">Upload Image</a>
+            <a href="{{ url_for('login') }}">Login</a>
+            <a href="{{ url_for('register') }}">Register</a>
+        </nav>
+    </header>
+    <main>
+        <h2>Uploaded Images</h2>
+        <div class="gallery">
+            {% for image in images %}
+                <div class="gallery-item">
+                    <a href="{{ url_for('view_image', filename=image) }}">
+                        <img src="{{ url_for('uploads', filename=image) }}" alt="Image">
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    </main>
+    <footer>
+        <p>&copy; {{ year }} Image Gallery. All rights reserved.</p>
+    </footer>
+</body>
+</html>

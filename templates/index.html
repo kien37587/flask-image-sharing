@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Gallery</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Welcome to the Image Gallery</h1>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('register') }}">Register</a></li>
+                <li><a href="{{ url_for('login') }}">Login</a></li>
+                <li><a href="{{ url_for('gallery') }}">View Gallery</a></li>
+                <li><a href="{{ url_for('upload') }}">Upload Image</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <h2>Explore and Share Your Images</h2>
+        <p>Join our community to upload and view amazing images!</p>
+    </main>
+    <footer>
+        <p>&copy; 2023 Image Gallery. All rights reserved.</p>
+    </footer>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
