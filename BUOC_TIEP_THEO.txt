@@ -33,13 +33,16 @@ BƯỚC 3: CONNECT VỚI LOCAL CODE
    git remote add origin https://github.com/YOUR_USERNAME/flask-image-sharing.git
    git push -u origin main
 
-BƯỚC 4: DEPLOY LÊN RAILWAY
+BƯỚC 4: DEPLOY LÊN RENDER.COM (MIỄN PHÍ!)
    ↓
-   1. Vào: https://railway.app
-   2. Login với GitHub
-   3. New Project → Deploy from GitHub
-   4. Chọn repo của bạn
-   5. Done! 🎉
+   1. Vào: https://render.com
+   2. Sign up with GitHub
+   3. New + → Web Service → Connect repo
+   4. Build: pip install -r requirements.txt
+   5. Start: gunicorn app:app
+   6. Instance: Free
+   7. Set SECRET_KEY environment variable
+   8. Done! 🎉
 
 ================================================================================
 
@@ -47,7 +50,7 @@ BƯỚC 4: DEPLOY LÊN RAILWAY
 
 1. Copy URL repository (sẽ hiện trên GitHub sau khi tạo)
 2. Chạy 3 lệnh ở BƯỚC 3 (trong PowerShell)
-3. Deploy Railway (5 phút nữa là xong!)
+3. Deploy Render (5 phút nữa là xong!)
 
 ================================================================================
 
