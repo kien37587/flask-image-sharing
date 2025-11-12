@@ -1,30 +1,475 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Gallery</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-</head>
-<body>
-    <header>
-        <h1>Welcome to the Image Gallery</h1>
-        <nav>
-            <ul>
-                <li><a href="{{ url_for('register') }}">Register</a></li>
-                <li><a href="{{ url_for('login') }}">Login</a></li>
-                <li><a href="{{ url_for('gallery') }}">View Gallery</a></li>
-                <li><a href="{{ url_for('upload') }}">Upload Image</a></li>
-            </ul>
-        </nav>
-    </header>
-    <main>
-        <h2>Explore and Share Your Images</h2>
-        <p>Join our community to upload and view amazing images!</p>
-    </main>
-    <footer>
-        <p>&copy; 2023 Image Gallery. All rights reserved.</p>
-    </footer>
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-</body>
+<!doctype html>
+<html lang="vi">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chia Sẻ Hình Ảnh</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      height: 100%;
+    }
+    
+    html {
+      height: 100%;
+    }
+
+    .gradient-bg {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .hero-section {
+      min-height: 80%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .feature-card {
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .floating-animation {
+      animation: floating 3s ease-in-out infinite;
+    }
+
+    @keyframes floating {
+      0%, 100% {
+        transform: translateY(0px);
+      }
+      50% {
+        transform: translateY(-20px);
+      }
+    }
+
+    .pulse-animation {
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.7;
+      }
+    }
+
+    .image-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 32px;
+    }
+
+    .image-placeholder {
+      aspect-ratio: 1;
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .stats-counter {
+      font-size: 3rem;
+      font-weight: bold;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    @media (max-width: 768px) {
+      .image-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body>
+  <div id="app" class="min-h-full"><!-- Navigation -->
+   <nav class="gradient-bg shadow-lg">
+    <div class="container mx-auto px-6 py-4">
+     <div class="flex justify-between items-center">
+      <div class="flex items-center space-x-2">
+       <svg class="w-8 h-8 text-white" fill="currentColor" viewbox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
+       </svg><span id="siteName" class="text-white text-2xl font-bold">ImageShare</span>
+      </div>
+    <div class="hidden md:flex space-x-6"><a href="#features" class="text-white hover:text-gray-200 transition-colors">Tính Năng</a> <a href="#gallery" class="text-white hover:text-gray-200 transition-colors">Thư Viện</a> <a href="#about" class="text-white hover:text-gray-200 transition-colors">Giới Thiệu</a>
+     </div>
+     <div class="flex items-center space-x-4">
+      {% if current_user %}
+       <a href="{{ url_for('gallery') }}" class="text-white hover:text-gray-200 transition-colors">Gallery</a>
+       <span class="text-white opacity-90">|</span>
+       <span class="text-white">{{ current_user }}</span>
+       <a href="{{ url_for('logout') }}" class="ml-2 bg-white text-purple-600 font-bold px-3 py-2 rounded-full hover:bg-gray-100 transition-all">Đăng xuất</a>
+      {% else %}
+       <a href="{{ url_for('gallery') }}" class="text-white hover:text-gray-200 transition-colors">Gallery</a>
+       <a href="{{ url_for('login') }}" class="text-white hover:text-gray-200 transition-colors">Đăng nhập</a>
+       <a href="{{ url_for('register') }}" class="ml-2 bg-white text-purple-600 font-bold px-3 py-2 rounded-full hover:bg-gray-100 transition-all">Đăng ký</a>
+      {% endif %}
+     </div>
+     </div>
+    </div>
+   </nav><!-- Hero Section -->
+   <section class="hero-section gradient-bg">
+    <div class="container mx-auto px-6 text-center">
+     <div class="floating-animation">
+      <svg class="w-24 h-24 mx-auto mb-8 text-white pulse-animation" fill="currentColor" viewbox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
+      </svg>
+     </div>
+     <h1 id="heroTitle" class="text-5xl md:text-6xl font-bold text-white mb-6">Chia Sẻ Khoảnh Khắc Đẹp</h1>
+  <p id="heroSubtitle" class="text-xl md:text-2xl text-white text-opacity-90 mb-8 max-w-3xl mx-auto">Nền tảng chia sẻ hình ảnh hiện đại, nơi bạn có thể lưu trữ, quản lý và chia sẻ những khoảnh khắc đáng nhớ với cộng đồng</p>
+  <a href="{{ url_for('gallery') if current_user else url_for('login') }}" id="ctaButton" class="inline-block bg-white text-purple-600 font-bold px-8 py-4 rounded-full text-lg hover:bg-gray-100 transition-all shadow-2xl hover:shadow-3xl transform hover:scale-105"> 🚀 Bắt Đầu Ngay </a>
+  <!-- Stats -->
+     <div class="grid grid-cols-3 gap-8 mt-16 max-w-3xl mx-auto">
+      <div class="text-center">
+       <div class="stats-counter">
+        10K+
+       </div>
+       <p class="text-white text-opacity-80 mt-2">Người Dùng</p>
+      </div>
+      <div class="text-center">
+       <div class="stats-counter">
+        50K+
+       </div>
+       <p class="text-white text-opacity-80 mt-2">Hình Ảnh</p>
+      </div>
+      <div class="text-center">
+       <div class="stats-counter">
+        100K+
+       </div>
+       <p class="text-white text-opacity-80 mt-2">Lượt Chia Sẻ</p>
+      </div>
+     </div>
+    </div>
+   </section><!-- Features Section -->
+   <section id="features" class="py-20 bg-gray-50">
+    <div class="container mx-auto px-6">
+     <h2 class="text-4xl font-bold text-center text-gray-800 mb-4">Tính Năng Nổi Bật</h2>
+     <p class="text-center text-gray-600 mb-16 max-w-2xl mx-auto">Khám phá những tính năng mạnh mẽ giúp bạn quản lý và chia sẻ hình ảnh dễ dàng</p>
+     <div class="grid md:grid-cols-3 gap-8"><!-- Feature 1 -->
+      <div class="feature-card bg-white rounded-2xl p-8 shadow-lg">
+       <div class="w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl flex items-center justify-center mb-6">
+        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+        </svg>
+       </div>
+       <h3 id="feature1Title" class="text-2xl font-bold text-gray-800 mb-4">Tải Lên Nhanh Chóng</h3>
+       <p id="feature1Desc" class="text-gray-600 leading-relaxed">Tải lên hình ảnh chỉ trong vài giây với giao diện kéo thả đơn giản. Hỗ trợ nhiều định dạng và kích thước file lớn.</p>
+      </div><!-- Feature 2 -->
+      <div class="feature-card bg-white rounded-2xl p-8 shadow-lg">
+       <div class="w-16 h-16 bg-gradient-to-br from-purple-400 to-purple-600 rounded-2xl flex items-center justify-center mb-6">
+        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+       </div>
+       <h3 id="feature2Title" class="text-2xl font-bold text-gray-800 mb-4">Quản Lý Thông Minh</h3>
+       <p id="feature2Desc" class="text-gray-600 leading-relaxed">Tổ chức hình ảnh theo thể loại, thêm mô tả và tìm kiếm dễ dàng. Quản lý bộ sưu tập của bạn một cách chuyên nghiệp.</p>
+      </div><!-- Feature 3 -->
+      <div class="feature-card bg-white rounded-2xl p-8 shadow-lg">
+       <div class="w-16 h-16 bg-gradient-to-br from-pink-400 to-pink-600 rounded-2xl flex items-center justify-center mb-6">
+        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+        </svg>
+       </div>
+       <h3 id="feature3Title" class="text-2xl font-bold text-gray-800 mb-4">Chia Sẻ Dễ Dàng</h3>
+       <p id="feature3Desc" class="text-gray-600 leading-relaxed">Chia sẻ hình ảnh với bạn bè và cộng đồng chỉ bằng một cú nhấp chuột. Kết nối và lan tỏa những khoảnh khắc đẹp.</p>
+      </div>
+     </div>
+    </div>
+   </section><!-- Gallery Preview Section -->
+   <section id="gallery" class="py-20 bg-white">
+    <div class="container mx-auto px-6">
+     <h2 class="text-4xl font-bold text-center text-gray-800 mb-4">Thư Viện Hình Ảnh</h2>
+     <p class="text-center text-gray-600 mb-12">Khám phá những hình ảnh tuyệt đẹp từ cộng đồng</p>
+     <div class="image-grid max-w-5xl mx-auto"><!-- Image 1 -->
+      <div class="image-placeholder bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center">
+       <svg class="w-16 h-16 text-white opacity-50" fill="currentColor" viewbox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
+       </svg>
+      </div><!-- Image 2 -->
+      <div class="image-placeholder bg-gradient-to-br from-pink-400 to-red-500 flex items-center justify-center">
+       <svg class="w-16 h-16 text-white opacity-50" fill="currentColor" viewbox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
+       </svg>
+      </div><!-- Image 3 -->
+      <div class="image-placeholder bg-gradient-to-br from-green-400 to-teal-500 flex items-center justify-center">
+       <svg class="w-16 h-16 text-white opacity-50" fill="currentColor" viewbox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
+       </svg>
+      </div><!-- Image 4 -->
+      <div class="image-placeholder bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center">
+       <svg class="w-16 h-16 text-white opacity-50" fill="currentColor" viewbox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
+       </svg>
+      </div><!-- Image 5 -->
+      <div class="image-placeholder bg-gradient-to-br from-indigo-400 to-blue-500 flex items-center justify-center">
+       <svg class="w-16 h-16 text-white opacity-50" fill="currentColor" viewbox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
+       </svg>
+      </div><!-- Image 6 -->
+      <div class="image-placeholder bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center">
+       <svg class="w-16 h-16 text-white opacity-50" fill="currentColor" viewbox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
+       </svg>
+      </div>
+     </div>
+    </div>
+   </section><!-- About Section -->
+   <section id="about" class="py-20 gradient-bg">
+    <div class="container mx-auto px-6 text-center">
+     <h2 class="text-4xl font-bold text-white mb-6">Về Chúng Tôi</h2>
+     <p class="text-xl text-white text-opacity-90 max-w-3xl mx-auto leading-relaxed">Chúng tôi là nền tảng chia sẻ hình ảnh hàng đầu, cam kết mang đến trải nghiệm tốt nhất cho người dùng. Với công nghệ hiện đại và giao diện thân thiện, chúng tôi giúp bạn lưu giữ và chia sẻ những khoảnh khắc đáng nhớ một cách dễ dàng và an toàn.</p>
+    </div>
+   </section><!-- Footer -->
+   <footer class="bg-gray-900 text-white py-12">
+    <div class="container mx-auto px-6">
+     <div class="grid md:grid-cols-4 gap-8 mb-8">
+      <div>
+       <h3 class="text-xl font-bold mb-4">ImageShare</h3>
+       <p class="text-gray-400">Nền tảng chia sẻ hình ảnh hiện đại và chuyên nghiệp</p>
+      </div>
+      <div>
+       <h4 class="font-bold mb-4">Sản Phẩm</h4>
+       <ul class="space-y-2 text-gray-400">
+        <li><a href="#" class="hover:text-white transition-colors">Tính Năng</a></li>
+        <li><a href="#" class="hover:text-white transition-colors">Bảng Giá</a></li>
+        <li><a href="#" class="hover:text-white transition-colors">API</a></li>
+       </ul>
+      </div>
+      <div>
+       <h4 class="font-bold mb-4">Công Ty</h4>
+       <ul class="space-y-2 text-gray-400">
+        <li><a href="#" class="hover:text-white transition-colors">Về Chúng Tôi</a></li>
+        <li><a href="#" class="hover:text-white transition-colors">Blog</a></li>
+        <li><a href="#" class="hover:text-white transition-colors">Tuyển Dụng</a></li>
+       </ul>
+      </div>
+      <div>
+       <h4 class="font-bold mb-4">Hỗ Trợ</h4>
+       <ul class="space-y-2 text-gray-400">
+        <li><a href="#" class="hover:text-white transition-colors">Trung Tâm Trợ Giúp</a></li>
+        <li><a href="#" class="hover:text-white transition-colors">Liên Hệ</a></li>
+        <li><a href="#" class="hover:text-white transition-colors">Điều Khoản</a></li>
+       </ul>
+      </div>
+     </div>
+     <div class="border-t border-gray-800 pt-8 text-center">
+      <p id="footerText" class="text-gray-400">© 2024 ImageShare. Tất cả quyền được bảo lưu.</p>
+     </div>
+    </div>
+   </footer>
+  </div>
+  <script>
+    const defaultConfig = {
+      site_name: "ImageShare",
+      hero_title: "Chia Sẻ Khoảnh Khắc Đẹp",
+      hero_subtitle: "Nền tảng chia sẻ hình ảnh hiện đại, nơi bạn có thể lưu trữ, quản lý và chia sẻ những khoảnh khắc đáng nhớ với cộng đồng",
+      cta_button: "🚀 Bắt Đầu Ngay",
+      feature1_title: "Tải Lên Nhanh Chóng",
+      feature1_desc: "Tải lên hình ảnh chỉ trong vài giây với giao diện kéo thả đơn giản. Hỗ trợ nhiều định dạng và kích thước file lớn.",
+      feature2_title: "Quản Lý Thông Minh",
+      feature2_desc: "Tổ chức hình ảnh theo thể loại, thêm mô tả và tìm kiếm dễ dàng. Quản lý bộ sưu tập của bạn một cách chuyên nghiệp.",
+      feature3_title: "Chia Sẻ Dễ Dàng",
+      feature3_desc: "Chia sẻ hình ảnh với bạn bè và cộng đồng chỉ bằng một cú nhấp chuột. Kết nối và lan tỏa những khoảnh khắc đẹp.",
+      footer_text: "© 2024 ImageShare. Tất cả quyền được bảo lưu.",
+      background_color: "#667eea",
+      card_color: "#ffffff",
+      text_color: "#1f2937",
+      primary_button_color: "#ffffff",
+      accent_color: "#764ba2",
+      font_family: "system-ui",
+      font_size: 16
+    };
+
+    async function onConfigChange(config) {
+      const siteName = document.getElementById('siteName');
+      const heroTitle = document.getElementById('heroTitle');
+      const heroSubtitle = document.getElementById('heroSubtitle');
+      const ctaButton = document.getElementById('ctaButton');
+      const feature1Title = document.getElementById('feature1Title');
+      const feature1Desc = document.getElementById('feature1Desc');
+      const feature2Title = document.getElementById('feature2Title');
+      const feature2Desc = document.getElementById('feature2Desc');
+      const feature3Title = document.getElementById('feature3Title');
+      const feature3Desc = document.getElementById('feature3Desc');
+      const footerText = document.getElementById('footerText');
+
+      const baseFont = config.font_family || defaultConfig.font_family;
+      const baseFontStack = `${baseFont}, system-ui, -apple-system, sans-serif`;
+      const baseSize = config.font_size || defaultConfig.font_size;
+
+      if (siteName) {
+        siteName.textContent = config.site_name || defaultConfig.site_name;
+        siteName.style.fontFamily = baseFontStack;
+        siteName.style.fontSize = `${baseSize * 1.5}px`;
+      }
+
+      if (heroTitle) {
+        heroTitle.textContent = config.hero_title || defaultConfig.hero_title;
+        heroTitle.style.fontFamily = baseFontStack;
+        heroTitle.style.fontSize = `${baseSize * 3}px`;
+      }
+
+      if (heroSubtitle) {
+        heroSubtitle.textContent = config.hero_subtitle || defaultConfig.hero_subtitle;
+        heroSubtitle.style.fontFamily = baseFontStack;
+        heroSubtitle.style.fontSize = `${baseSize * 1.25}px`;
+      }
+
+      if (ctaButton) {
+        ctaButton.textContent = config.cta_button || defaultConfig.cta_button;
+        ctaButton.style.fontFamily = baseFontStack;
+        ctaButton.style.fontSize = `${baseSize * 1.125}px`;
+        ctaButton.style.backgroundColor = config.primary_button_color || defaultConfig.primary_button_color;
+      }
+
+      if (feature1Title) {
+        feature1Title.textContent = config.feature1_title || defaultConfig.feature1_title;
+        feature1Title.style.fontFamily = baseFontStack;
+        feature1Title.style.fontSize = `${baseSize * 1.5}px`;
+        feature1Title.style.color = config.text_color || defaultConfig.text_color;
+      }
+
+      if (feature1Desc) {
+        feature1Desc.textContent = config.feature1_desc || defaultConfig.feature1_desc;
+        feature1Desc.style.fontFamily = baseFontStack;
+        feature1Desc.style.fontSize = `${baseSize}px`;
+      }
+
+      if (feature2Title) {
+        feature2Title.textContent = config.feature2_title || defaultConfig.feature2_title;
+        feature2Title.style.fontFamily = baseFontStack;
+        feature2Title.style.fontSize = `${baseSize * 1.5}px`;
+        feature2Title.style.color = config.text_color || defaultConfig.text_color;
+      }
+
+      if (feature2Desc) {
+        feature2Desc.textContent = config.feature2_desc || defaultConfig.feature2_desc;
+        feature2Desc.style.fontFamily = baseFontStack;
+        feature2Desc.style.fontSize = `${baseSize}px`;
+      }
+
+      if (feature3Title) {
+        feature3Title.textContent = config.feature3_title || defaultConfig.feature3_title;
+        feature3Title.style.fontFamily = baseFontStack;
+        feature3Title.style.fontSize = `${baseSize * 1.5}px`;
+        feature3Title.style.color = config.text_color || defaultConfig.text_color;
+      }
+
+      if (feature3Desc) {
+        feature3Desc.textContent = config.feature3_desc || defaultConfig.feature3_desc;
+        feature3Desc.style.fontFamily = baseFontStack;
+        feature3Desc.style.fontSize = `${baseSize}px`;
+      }
+
+      if (footerText) {
+        footerText.textContent = config.footer_text || defaultConfig.footer_text;
+        footerText.style.fontFamily = baseFontStack;
+        footerText.style.fontSize = `${baseSize * 0.875}px`;
+      }
+
+      const gradientBgs = document.querySelectorAll('.gradient-bg');
+      gradientBgs.forEach(el => {
+        el.style.background = `linear-gradient(135deg, ${config.background_color || defaultConfig.background_color} 0%, ${config.accent_color || defaultConfig.accent_color} 100%)`;
+      });
+
+      const featureCards = document.querySelectorAll('.feature-card');
+      featureCards.forEach(card => {
+        card.style.backgroundColor = config.card_color || defaultConfig.card_color;
+      });
+    }
+
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange,
+        mapToCapabilities: (config) => ({
+          recolorables: [
+            {
+              get: () => config.background_color || defaultConfig.background_color,
+              set: (value) => {
+                config.background_color = value;
+                window.elementSdk.setConfig({ background_color: value });
+              }
+            },
+            {
+              get: () => config.card_color || defaultConfig.card_color,
+              set: (value) => {
+                config.card_color = value;
+                window.elementSdk.setConfig({ card_color: value });
+              }
+            },
+            {
+              get: () => config.text_color || defaultConfig.text_color,
+              set: (value) => {
+                config.text_color = value;
+                window.elementSdk.setConfig({ text_color: value });
+              }
+            },
+            {
+              get: () => config.primary_button_color || defaultConfig.primary_button_color,
+              set: (value) => {
+                config.primary_button_color = value;
+                window.elementSdk.setConfig({ primary_button_color: value });
+              }
+            },
+            {
+              get: () => config.accent_color || defaultConfig.accent_color,
+              set: (value) => {
+                config.accent_color = value;
+                window.elementSdk.setConfig({ accent_color: value });
+              }
+            }
+          ],
+          borderables: [],
+          fontEditable: {
+            get: () => config.font_family || defaultConfig.font_family,
+            set: (value) => {
+              config.font_family = value;
+              window.elementSdk.setConfig({ font_family: value });
+            }
+          },
+          fontSizeable: {
+            get: () => config.font_size || defaultConfig.font_size,
+            set: (value) => {
+              config.font_size = value;
+              window.elementSdk.setConfig({ font_size: value });
+            }
+          }
+        }),
+        mapToEditPanelValues: (config) => new Map([
+          ["site_name", config.site_name || defaultConfig.site_name],
+          ["hero_title", config.hero_title || defaultConfig.hero_title],
+          ["hero_subtitle", config.hero_subtitle || defaultConfig.hero_subtitle],
+          ["cta_button", config.cta_button || defaultConfig.cta_button],
+          ["feature1_title", config.feature1_title || defaultConfig.feature1_title],
+          ["feature1_desc", config.feature1_desc || defaultConfig.feature1_desc],
+          ["feature2_title", config.feature2_title || defaultConfig.feature2_title],
+          ["feature2_desc", config.feature2_desc || defaultConfig.feature2_desc],
+          ["feature3_title", config.feature3_title || defaultConfig.feature3_title],
+          ["feature3_desc", config.feature3_desc || defaultConfig.feature3_desc],
+          ["footer_text", config.footer_text || defaultConfig.footer_text]
+        ])
+      });
+    }
+
+    // Smooth scroll for navigation links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }
+      });
+    });
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99d3d22eb0550993',t:'MTc2MjkyNzM1Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>

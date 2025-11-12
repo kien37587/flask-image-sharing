@@ -1,35 +1,752 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <title>Image Gallery</title>
-</head>
-<body>
-    <header>
-        <h1>Image Gallery</h1>
-        <nav>
-            <a href="{{ url_for('index') }}">Home</a>
-            <a href="{{ url_for('upload') }}">Upload Image</a>
-            <a href="{{ url_for('login') }}">Login</a>
-            <a href="{{ url_for('register') }}">Register</a>
-        </nav>
-    </header>
-    <main>
-        <h2>Uploaded Images</h2>
-        <div class="gallery">
-            {% for image in images %}
-                <div class="gallery-item">
-                    <a href="{{ url_for('view_image', filename=image) }}">
-                        <img src="{{ url_for('uploads', filename=image) }}" alt="Image">
-                    </a>
-                </div>
-            {% endfor %}
-        </div>
+<!doctype html>
+<html lang="vi">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gallery Hình Ảnh</title>
+  <script src="/_sdk/data_sdk.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      height: 100%;
+    }
+    
+    html {
+      height: 100%;
+    }
+
+    /* Masonry Grid Layout */
+    .masonry-grid {
+      column-count: 4;
+      column-gap: 16px;
+      padding: 16px;
+    }
+
+    @media (max-width: 1280px) {
+      .masonry-grid {
+        column-count: 3;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .masonry-grid {
+        column-count: 2;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .masonry-grid {
+        column-count: 1;
+      }
+    }
+
+    .masonry-item {
+      break-inside: avoid;
+      margin-bottom: 16px;
+      position: relative;
+      overflow: hidden;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .masonry-item:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .masonry-item img {
+      width: 100%;
+      display: block;
+      border-radius: 16px;
+    }
+
+    .image-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+      padding: 20px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .masonry-item:hover .image-overlay {
+      opacity: 1;
+    }
+
+    .filter-btn {
+      transition: all 0.3s ease;
+    }
+
+    .filter-btn.active {
+      transform: scale(1.05);
+    }
+
+    .fade-in {
+      animation: fadeIn 0.5s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .detail-page {
+      animation: slideUp 0.4s ease;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(50px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .action-button {
+      transition: all 0.3s ease;
+    }
+
+    .action-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .related-image {
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .related-image:hover {
+      transform: scale(1.05);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    }
+
+    .toast {
+      animation: slideInRight 0.3s ease, slideOutRight 0.3s ease 2.7s;
+    }
+
+    @keyframes slideInRight {
+      from {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideOutRight {
+      from {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      to {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+ </head>
+ <body>
+  <div id="app" class="min-h-full" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"><!-- Gallery View -->
+   <div id="galleryView"><!-- Header -->
+    <header class="bg-white shadow-lg sticky top-0 z-50">
+     <div class="container mx-auto px-6 py-6">
+  <div class="flex items-center justify-between mb-6">
+   <!-- left: logo + title -->
+   <div class="flex items-center space-x-3 min-w-0">
+    <svg class="w-10 h-10 text-purple-600 flex-shrink-0" fill="currentColor" viewbox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" /></svg>
+    <h1 id="pageTitle" class="text-3xl font-bold text-gray-800 truncate">🖼️ Gallery Hình Ảnh</h1>
+   </div>
+
+   <!-- center: search (flex-grow) -->
+   <div class="flex-1 px-6">
+    <div class="relative">
+     <input id="searchInput" type="text" placeholder="🔍 Tìm kiếm hình ảnh..." class="w-full px-6 py-3 border-2 border-gray-300 rounded-full focus:outline-none focus:border-purple-500 transition-colors text-lg" />
+    </div>
+   </div>
+
+   <!-- right: image count, upload button, user avatar -->
+   <div class="flex items-center space-x-3 flex-shrink-0">
+    <div class="text-gray-600 hidden sm:block"><span id="imageCount" class="font-semibold">0</span> hình</div>
+    <a href="{{ url_for('upload') }}" id="headerUploadBtn" class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-blue-500 text-white shadow hover:bg-blue-600" title="Tải ảnh lên">📤</a>
+    <div id="userMenuContainer" class="relative">
+     <button id="userMenuBtn" class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden shadow">
+      {% if current_user %}
+       <span style="font-weight:700;color:#4b5563">{{ current_user[:2].upper() }}</span>
+      {% else %}
+       <svg class="w-6 h-6 text-gray-600" fill="currentColor" viewbox="0 0 24 24"><path d="M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5zm0 2c-4.418 0-8 1.79-8 4v2h16v-2c0-2.21-3.582-4-8-4z"/></svg>
+      {% endif %}
+     </button>
+     <div id="userMenu" class="absolute right-0 mt-2 w-44 bg-white rounded-lg shadow-lg hidden">
+      <a href="{{ url_for('user_page') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Trang cá nhân</a>
+      <a href="{{ url_for('upload') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Tải ảnh lên</a>
+     </div>
+    </div>
+   </div>
+  </div>
+      </div><!-- Search Bar -->
+      <div class="mb-4">
+       <div class="relative"><input type="text" id="searchInput" placeholder="🔍 Tìm kiếm hình ảnh..." class="w-full px-6 py-4 border-2 border-gray-300 rounded-full focus:outline-none focus:border-purple-500 transition-colors text-lg">
+       </div>
+      </div><!-- Filter Buttons -->
+      <div class="flex flex-wrap gap-3" id="filterButtons"><button class="filter-btn active px-6 py-2 rounded-full font-semibold transition-all" data-category="all"> Tất Cả </button> <button class="filter-btn px-6 py-2 rounded-full font-semibold transition-all" data-category="Phong Cảnh"> 🏞️ Phong Cảnh </button> <button class="filter-btn px-6 py-2 rounded-full font-semibold transition-all" data-category="Chân Dung"> 👤 Chân Dung </button> <button class="filter-btn px-6 py-2 rounded-full font-semibold transition-all" data-category="Động Vật"> 🐾 Động Vật </button> <button class="filter-btn px-6 py-2 rounded-full font-semibold transition-all" data-category="Ẩm Thực"> 🍜 Ẩm Thực </button> <button class="filter-btn px-6 py-2 rounded-full font-semibold transition-all" data-category="Kiến Trúc"> 🏛️ Kiến Trúc </button> <button class="filter-btn px-6 py-2 rounded-full font-semibold transition-all" data-category="Nghệ Thuật"> 🎨 Nghệ Thuật </button> <button class="filter-btn px-6 py-2 rounded-full font-semibold transition-all" data-category="Du Lịch"> ✈️ Du Lịch </button> <button class="filter-btn px-6 py-2 rounded-full font-semibold transition-all" data-category="Khác"> 📁 Khác </button>
+      </div>
+     </div>
+    </header><!-- Gallery Grid -->
+    <main class="container mx-auto py-8">
+     <div id="gallery" class="masonry-grid"><!-- Images will be displayed here -->
+     </div><!-- Empty State -->
+     <div id="emptyState" class="text-center py-20 hidden">
+      <svg class="w-32 h-32 mx-auto text-white opacity-50 mb-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>
+      <p id="emptyMessage" class="text-white text-2xl font-semibold">Chưa có hình ảnh nào được tải lên</p>
+      <p class="text-white text-opacity-80 mt-2">Hãy tải lên hình ảnh đầu tiên của bạn!</p>
+     </div>
     </main>
-    <footer>
-        <p>&copy; {{ year }} Image Gallery. All rights reserved.</p>
-    </footer>
-</body>
+   </div><!-- Detail View -->
+   <div id="detailView" class="fixed inset-0 bg-white z-50 overflow-y-auto hidden">
+    <div class="min-h-full detail-page"><!-- Detail Header -->
+     <header class="bg-gradient-to-r from-purple-600 to-indigo-600 shadow-lg sticky top-0 z-10">
+      <div class="container mx-auto px-6 py-4">
+       <div class="flex items-center justify-between flex-wrap gap-4"><button id="backButton" class="flex items-center space-x-2 text-white hover:text-gray-200 transition-colors">
+         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+         </svg><span class="font-semibold">Quay Lại Gallery</span> </button>
+        <div class="flex items-center space-x-3"><button id="detailPrevButton" class="flex items-center space-x-2 bg-white bg-opacity-20 text-white px-4 py-2 rounded-full font-semibold hover:bg-opacity-30 transition-all">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg><span>Trước</span> </button> <button id="detailNextButton" class="flex items-center space-x-2 bg-white bg-opacity-20 text-white px-4 py-2 rounded-full font-semibold hover:bg-opacity-30 transition-all"> <span>Sau</span>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg></button> <button id="shareButton" class="flex items-center space-x-2 bg-white text-purple-600 px-4 py-2 rounded-full font-semibold hover:bg-gray-100 transition-all">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+          </svg><span>Chia Sẻ</span> </button>
+        </div>
+       </div>
+      </div>
+     </header><!-- Detail Content -->
+     <div class="container mx-auto px-6 py-8">
+      <div class="grid lg:grid-cols-3 gap-8"><!-- Image Section -->
+       <div class="lg:col-span-2">
+        <div class="bg-gray-100 rounded-2xl overflow-hidden shadow-2xl p-4" style="min-height: 500px; display: flex; align-items: center; justify-content: center;"><img id="detailImage" src="" alt="" style="max-width: 100%; max-height: 600px; object-fit: contain; border-radius: 12px;">
+        </div><!-- Image Actions -->
+        <div class="flex flex-wrap items-center justify-between mt-6 bg-white rounded-xl p-4 shadow-lg gap-4">
+         <div class="flex flex-wrap items-center gap-3"><button id="likeButton" class="action-button flex items-center space-x-2 px-5 py-3 rounded-full bg-red-50 text-red-500 font-semibold">
+           <svg class="w-6 h-6" fill="currentColor" viewbox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+           </svg><span>Yêu Thích</span> </button> <button id="downloadButton" class="action-button flex items-center space-x-2 px-5 py-3 rounded-full bg-blue-50 text-blue-500 font-semibold">
+           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+           </svg><span>Tải Xuống</span> </button>
+         </div>
+         <div class="flex items-center space-x-2 text-gray-500">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          </svg><span class="font-semibold">1,234 lượt xem</span>
+         </div>
+        </div>
+       </div><!-- Info Section -->
+       <div class="lg:col-span-1"><!-- Image Info Card -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
+         <h1 id="detailTitle" class="text-3xl font-bold text-gray-800 mb-6"></h1>
+         <div class="space-y-5"><!-- Category -->
+          <div class="flex items-center space-x-3">
+           <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+            </svg>
+           </div>
+           <div>
+            <p class="text-sm text-gray-500">Thể Loại</p>
+            <p id="detailCategory" class="font-semibold text-gray-800 text-lg"></p>
+           </div>
+          </div><!-- Upload Date -->
+          <div class="flex items-center space-x-3">
+           <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+           </div>
+           <div>
+            <p class="text-sm text-gray-500">Ngày Tải Lên</p>
+            <p id="detailDate" class="font-semibold text-gray-800"></p>
+           </div>
+          </div><!-- Image ID -->
+          <div class="flex items-center space-x-3">
+           <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+            </svg>
+           </div>
+           <div>
+            <p class="text-sm text-gray-500">ID Hình Ảnh</p>
+            <p id="detailId" class="font-mono text-sm text-gray-800"></p>
+           </div>
+          </div>
+         </div>
+        </div><!-- Stats Card -->
+        <div class="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl shadow-lg p-6 text-white mb-6">
+         <h3 class="text-xl font-bold mb-5 flex items-center"><span class="mr-2">📊</span> <span>Thống Kê</span></h3>
+         <div class="space-y-4">
+          <div class="bg-white bg-opacity-20 rounded-lg p-4 flex justify-between items-center transition-all hover:bg-opacity-30"><span class="text-white text-opacity-90 font-medium">Lượt Xem</span> <span class="font-bold text-2xl">1,234</span>
+          </div>
+          <div class="bg-white bg-opacity-20 rounded-lg p-4 flex justify-between items-center transition-all hover:bg-opacity-30"><span class="text-white text-opacity-90 font-medium">Lượt Thích</span> <span class="font-bold text-2xl">89</span>
+          </div>
+          <div class="bg-white bg-opacity-20 rounded-lg p-4 flex justify-between items-center transition-all hover:bg-opacity-30"><span class="text-white text-opacity-90 font-medium">Lượt Chia Sẻ</span> <span class="font-bold text-2xl">23</span>
+          </div>
+         </div>
+        </div><!-- Related Images -->
+        <div class="bg-white rounded-2xl shadow-lg p-6">
+         <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center"><span class="mr-2">🖼️</span> <span>Hình Ảnh Liên Quan</span></h3>
+         <div class="grid grid-cols-2 gap-3" id="relatedImages"><!-- Related images will be inserted here -->
+         </div>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div>
+   </div>
+  </div>
+  <script>
+    const defaultConfig = {
+      page_title: "🖼️ Gallery Hình Ảnh",
+      search_placeholder: "🔍 Tìm kiếm hình ảnh...",
+      empty_message: "Chưa có hình ảnh nào được tải lên",
+      background_color: "#667eea",
+      header_color: "#ffffff",
+      text_color: "#1f2937",
+      button_active_color: "#8b5cf6",
+      button_inactive_color: "#e5e7eb",
+      font_family: "system-ui",
+      font_size: 16
+    };
+
+    let allImages = [];
+    let filteredImages = [];
+    let currentFilter = 'all';
+    let searchQuery = '';
+    let currentDetailIndex = -1;
+    let isLiked = false;
+
+    // Data SDK Handler
+    const dataHandler = {
+      onDataChanged(data) {
+        allImages = data;
+        applyFilters();
+      }
+    };
+
+    // Initialize Data SDK
+    async function initDataSdk() {
+      const result = await window.dataSdk.init(dataHandler);
+      if (!result.isOk) {
+        console.error("Failed to initialize Data SDK");
+      }
+    }
+
+    // Element SDK
+    async function onConfigChange(config) {
+      const pageTitle = document.getElementById('pageTitle');
+      const searchInput = document.getElementById('searchInput');
+      const emptyMessage = document.getElementById('emptyMessage');
+      const app = document.getElementById('app');
+      const header = document.querySelector('header');
+      
+      const baseFont = config.font_family || defaultConfig.font_family;
+      const baseFontStack = `${baseFont}, system-ui, sans-serif`;
+      const baseSize = config.font_size || defaultConfig.font_size;
+
+      if (pageTitle) {
+        pageTitle.textContent = config.page_title || defaultConfig.page_title;
+        pageTitle.style.fontFamily = baseFontStack;
+        pageTitle.style.fontSize = `${baseSize * 1.875}px`;
+        pageTitle.style.color = config.text_color || defaultConfig.text_color;
+      }
+
+      if (searchInput) {
+        searchInput.placeholder = config.search_placeholder || defaultConfig.search_placeholder;
+        searchInput.style.fontFamily = baseFontStack;
+        searchInput.style.fontSize = `${baseSize * 1.125}px`;
+      }
+
+      if (emptyMessage) {
+        emptyMessage.textContent = config.empty_message || defaultConfig.empty_message;
+        emptyMessage.style.fontFamily = baseFontStack;
+        emptyMessage.style.fontSize = `${baseSize * 1.5}px`;
+      }
+
+      if (app) {
+        app.style.background = `linear-gradient(135deg, ${config.background_color || defaultConfig.background_color} 0%, #764ba2 100%)`;
+      }
+
+      if (header) {
+        header.style.backgroundColor = config.header_color || defaultConfig.header_color;
+      }
+
+      updateFilterButtons(config);
+    }
+
+    function updateFilterButtons(config) {
+      const filterButtons = document.querySelectorAll('.filter-btn');
+      const activeColor = config.button_active_color || defaultConfig.button_active_color;
+      const inactiveColor = config.button_inactive_color || defaultConfig.button_inactive_color;
+      const baseFont = config.font_family || defaultConfig.font_family;
+      const baseSize = config.font_size || defaultConfig.font_size;
+
+      filterButtons.forEach(btn => {
+        btn.style.fontFamily = `${baseFont}, system-ui, sans-serif`;
+        btn.style.fontSize = `${baseSize * 0.875}px`;
+        
+        if (btn.classList.contains('active')) {
+          btn.style.backgroundColor = activeColor;
+          btn.style.color = '#ffffff';
+        } else {
+          btn.style.backgroundColor = inactiveColor;
+          btn.style.color = '#6b7280';
+        }
+      });
+    }
+
+    // Initialize Element SDK
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange,
+        mapToCapabilities: (config) => ({
+          recolorables: [
+            {
+              get: () => config.background_color || defaultConfig.background_color,
+              set: (value) => {
+                config.background_color = value;
+                window.elementSdk.setConfig({ background_color: value });
+              }
+            },
+            {
+              get: () => config.header_color || defaultConfig.header_color,
+              set: (value) => {
+                config.header_color = value;
+                window.elementSdk.setConfig({ header_color: value });
+              }
+            },
+            {
+              get: () => config.text_color || defaultConfig.text_color,
+              set: (value) => {
+                config.text_color = value;
+                window.elementSdk.setConfig({ text_color: value });
+              }
+            },
+            {
+              get: () => config.button_active_color || defaultConfig.button_active_color,
+              set: (value) => {
+                config.button_active_color = value;
+                window.elementSdk.setConfig({ button_active_color: value });
+              }
+            },
+            {
+              get: () => config.button_inactive_color || defaultConfig.button_inactive_color,
+              set: (value) => {
+                config.button_inactive_color = value;
+                window.elementSdk.setConfig({ button_inactive_color: value });
+              }
+            }
+          ],
+          borderables: [],
+          fontEditable: {
+            get: () => config.font_family || defaultConfig.font_family,
+            set: (value) => {
+              config.font_family = value;
+              window.elementSdk.setConfig({ font_family: value });
+            }
+          },
+          fontSizeable: {
+            get: () => config.font_size || defaultConfig.font_size,
+            set: (value) => {
+              config.font_size = value;
+              window.elementSdk.setConfig({ font_size: value });
+            }
+          }
+        }),
+        mapToEditPanelValues: (config) => new Map([
+          ["page_title", config.page_title || defaultConfig.page_title],
+          ["search_placeholder", config.search_placeholder || defaultConfig.search_placeholder],
+          ["empty_message", config.empty_message || defaultConfig.empty_message]
+        ])
+      });
+    }
+
+    // Filter and Search
+    function applyFilters() {
+      filteredImages = allImages.filter(image => {
+        const matchesCategory = currentFilter === 'all' || image.imageCategory === currentFilter;
+        const matchesSearch = searchQuery === '' || 
+          image.imageName.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchesCategory && matchesSearch;
+      });
+
+      renderGallery();
+      updateImageCount();
+    }
+
+    function updateImageCount() {
+      const imageCount = document.getElementById('imageCount');
+      if (imageCount) {
+        imageCount.textContent = filteredImages.length;
+      }
+    }
+
+    // Render Gallery
+    function renderGallery() {
+      const gallery = document.getElementById('gallery');
+      const emptyState = document.getElementById('emptyState');
+
+      if (filteredImages.length === 0) {
+        gallery.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+      gallery.innerHTML = '';
+
+      filteredImages.forEach((image, index) => {
+        gallery.appendChild(createMasonryItem(image, index));
+      });
+    }
+
+    function createMasonryItem(image, index) {
+      const div = document.createElement('div');
+      div.className = 'masonry-item fade-in';
+      div.dataset.imageId = image.id;
+      div.dataset.imageIndex = index;
+
+      const uploadDate = new Date(image.uploadedAt);
+      const formattedDate = uploadDate.toLocaleDateString('vi-VN', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+
+      div.innerHTML = `
+        <img src="${image.imageData}" alt="${image.imageName}" loading="lazy">
+        <div class="image-overlay">
+          <h3 class="text-white font-bold text-lg mb-1">${image.imageName}</h3>
+          <p class="text-white text-sm opacity-90">${image.imageCategory}</p>
+        </div>
+      `;
+
+      div.addEventListener('click', () => openDetailView(index));
+
+      return div;
+    }
+
+    // Detail View Functions
+    function openDetailView(index) {
+      currentDetailIndex = index;
+      const image = filteredImages[index];
+      
+      const galleryView = document.getElementById('galleryView');
+      const detailView = document.getElementById('detailView');
+      const detailImage = document.getElementById('detailImage');
+      const detailTitle = document.getElementById('detailTitle');
+      const detailCategory = document.getElementById('detailCategory');
+      const detailDate = document.getElementById('detailDate');
+      const detailId = document.getElementById('detailId');
+
+      const uploadDate = new Date(image.uploadedAt);
+      const formattedDate = uploadDate.toLocaleDateString('vi-VN', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      detailImage.src = image.imageData;
+      detailImage.alt = image.imageName;
+      detailTitle.textContent = image.imageName;
+      detailCategory.textContent = image.imageCategory;
+      detailDate.textContent = formattedDate;
+      detailId.textContent = `#${image.id.substring(0, 12)}`;
+
+      renderRelatedImages(image);
+      updateDetailNavButtons();
+
+      galleryView.style.display = 'none';
+      detailView.classList.remove('hidden');
+      document.body.style.overflow = 'auto';
+      
+      isLiked = false;
+      updateLikeButton();
+    }
+
+    function closeDetailView() {
+      const galleryView = document.getElementById('galleryView');
+      const detailView = document.getElementById('detailView');
+      
+      detailView.classList.add('hidden');
+      galleryView.style.display = 'block';
+      currentDetailIndex = -1;
+    }
+
+    function navigateDetail(direction) {
+      const newIndex = currentDetailIndex + direction;
+      if (newIndex >= 0 && newIndex < filteredImages.length) {
+        openDetailView(newIndex);
+      }
+    }
+
+    function updateDetailNavButtons() {
+      const prevBtn = document.getElementById('detailPrevButton');
+      const nextBtn = document.getElementById('detailNextButton');
+
+      prevBtn.disabled = currentDetailIndex <= 0;
+      nextBtn.disabled = currentDetailIndex >= filteredImages.length - 1;
+
+      prevBtn.style.opacity = prevBtn.disabled ? '0.5' : '1';
+      nextBtn.style.opacity = nextBtn.disabled ? '0.5' : '1';
+      prevBtn.style.cursor = prevBtn.disabled ? 'not-allowed' : 'pointer';
+      nextBtn.style.cursor = nextBtn.disabled ? 'not-allowed' : 'pointer';
+    }
+
+    function renderRelatedImages(currentImage) {
+      const relatedContainer = document.getElementById('relatedImages');
+      relatedContainer.innerHTML = '';
+
+      const relatedImages = allImages
+        .filter(img => img.imageCategory === currentImage.imageCategory && img.id !== currentImage.id)
+        .slice(0, 6);
+
+      if (relatedImages.length === 0) {
+        relatedContainer.innerHTML = '<p class="text-gray-500 text-sm col-span-2">Không có hình ảnh liên quan</p>';
+        return;
+      }
+
+      relatedImages.forEach(image => {
+        const div = document.createElement('div');
+        div.className = 'related-image rounded-lg overflow-hidden';
+        div.innerHTML = `<img src="${image.imageData}" alt="${image.imageName}" class="w-full h-24 object-cover">`;
+        div.addEventListener('click', () => {
+          const newIndex = filteredImages.findIndex(img => img.id === image.id);
+          if (newIndex >= 0) {
+            openDetailView(newIndex);
+          }
+        });
+        relatedContainer.appendChild(div);
+      });
+    }
+
+    function updateLikeButton() {
+      const likeButton = document.getElementById('likeButton');
+      if (isLiked) {
+        likeButton.classList.remove('bg-red-50', 'text-red-500');
+        likeButton.classList.add('bg-red-500', 'text-white');
+      } else {
+        likeButton.classList.remove('bg-red-500', 'text-white');
+        likeButton.classList.add('bg-red-50', 'text-red-500');
+      }
+    }
+
+    function showToast(message, bgColor) {
+      const toast = document.createElement('div');
+      toast.className = `toast fixed top-6 right-6 ${bgColor} text-white px-6 py-4 rounded-lg shadow-2xl z-50`;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.remove();
+      }, 3000);
+    }
+
+    // Event Listeners
+    document.getElementById('backButton').addEventListener('click', closeDetailView);
+
+    document.getElementById('detailPrevButton').addEventListener('click', () => navigateDetail(-1));
+    document.getElementById('detailNextButton').addEventListener('click', () => navigateDetail(1));
+
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      searchQuery = e.target.value;
+      applyFilters();
+    });
+
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    filterButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.dataset.category;
+        applyFilters();
+        
+        const config = window.elementSdk?.config || defaultConfig;
+        updateFilterButtons(config);
+      });
+    });
+
+    document.getElementById('shareButton').addEventListener('click', () => {
+      showToast('✅ Đã sao chép liên kết chia sẻ!', 'bg-green-500');
+    });
+
+    document.getElementById('likeButton').addEventListener('click', () => {
+      isLiked = !isLiked;
+      updateLikeButton();
+      showToast(isLiked ? '❤️ Đã thêm vào yêu thích!' : '💔 Đã bỏ yêu thích!', 'bg-red-500');
+    });
+
+    document.getElementById('downloadButton').addEventListener('click', () => {
+      const detailImage = document.getElementById('detailImage');
+      const link = document.createElement('a');
+      link.href = detailImage.src;
+      link.download = filteredImages[currentDetailIndex].imageName + '.jpg';
+      link.click();
+      showToast('📥 Đang tải xuống hình ảnh...', 'bg-blue-500');
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (currentDetailIndex >= 0) {
+        if (e.key === 'Escape') {
+          closeDetailView();
+        } else if (e.key === 'ArrowLeft') {
+          navigateDetail(-1);
+        } else if (e.key === 'ArrowRight') {
+          navigateDetail(1);
+        }
+      }
+    });
+
+    // Initialize
+    initDataSdk();
+
+    // User menu click toggle (good for touch devices)
+    const userMenuContainer = document.getElementById('userMenuContainer');
+    const userMenu = document.getElementById('userMenu');
+    const userMenuBtn = document.getElementById('userMenuBtn');
+    if (userMenuContainer && userMenu && userMenuBtn) {
+      userMenuBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        userMenu.classList.toggle('hidden');
+      });
+      // prevent clicks inside the menu from closing immediately
+      userMenu.addEventListener('click', (e) => e.stopPropagation());
+      // close when clicking anywhere else
+      document.addEventListener('click', (e) => {
+        if (!userMenuContainer.contains(e.target)) {
+          userMenu.classList.add('hidden');
+        }
+      });
+      // also close on Escape
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') userMenu.classList.add('hidden');
+      });
+    }
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99d3e365e0ca0993',t:'MTc2MjkyODA1Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>

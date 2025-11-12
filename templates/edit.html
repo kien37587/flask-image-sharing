@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="vi">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Profile</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    .edit-container {
+      background: #ffffff;
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      max-width: 600px;
+      width: 100%;
+      padding: 48px;
+      animation: slideUp 0.4s ease-out;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .page-title {
+      font-size: 32px;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    .page-subtitle {
+      font-size: 16px;
+      color: #666;
+    }
+
+    .avatar-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 32px;
+      padding: 24px;
+      background: #f8f9fa;
+      border-radius: 16px;
+    }
+
+    .avatar-preview {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 48px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+      transition: transform 0.3s;
+    }
+
+    .avatar-preview:hover {
+      transform: scale(1.05);
+    }
+
+    .change-avatar-btn {
+      padding: 10px 24px;
+      border-radius: 20px;
+      border: 2px solid #1e88e5;
+      background: transparent;
+      color: #1e88e5;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .change-avatar-btn:hover {
+      background: #1e88e5;
+      color: white;
+      transform: translateY(-2px);
+    }
+
+    .form-group {
+      margin-bottom: 24px;
+    }
+
+    .form-label {
+      display: block;
+      font-weight: 600;
+      font-size: 14px;
+      color: #333;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      font-size: 16px;
+      font-family: inherit;
+      transition: all 0.3s;
+      background: #ffffff;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: #1e88e5;
+      box-shadow: 0 0 0 4px rgba(30, 136, 229, 0.1);
+    }
+
+    .form-input:hover {
+      border-color: #bdbdbd;
+    }
+
+    textarea.form-input {
+      resize: vertical;
+      min-height: 120px;
+      font-family: inherit;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 16px;
+      margin-top: 32px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 16px 32px;
+      border-radius: 12px;
+      border: none;
+      font-weight: 600;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: #1e88e5;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #1565c0;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(30, 136, 229, 0.3);
+    }
+
+    .btn-secondary {
+      background: #efefef;
+      color: #333;
+    }
+
+    .btn-secondary:hover {
+      background: #e0e0e0;
+      transform: translateY(-2px);
+    }
+
+    .success-message {
+      display: none;
+      background: #4CAF50;
+      color: white;
+      padding: 16px 24px;
+      border-radius: 12px;
+      margin-bottom: 24px;
+      text-align: center;
+      font-weight: 600;
+      animation: slideDown 0.3s ease-out;
+    }
+
+    .success-message.show {
+      display: block;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .char-count {
+      font-size: 12px;
+      color: #999;
+      text-align: right;
+      margin-top: 4px;
+    }
+
+    @media (max-width: 768px) {
+      .edit-container {
+        padding: 32px 24px;
+      }
+
+      .page-title {
+        font-size: 24px;
+      }
+
+      .form-actions {
+        flex-direction: column;
+      }
+
+      .btn {
+        width: 100%;
+      }
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+ </head>
+ <body>
+  <main class="edit-container">
+   <div class="success-message" id="success-message">
+    ✓ Hồ sơ đã được cập nhật thành công!
+   </div>
+   <header class="header">
+    <h1 class="page-title" id="page-title">Chỉnh sửa hồ sơ</h1>
+    <p class="page-subtitle">Cập nhật thông tin cá nhân của bạn</p>
+   </header>
+   <section class="avatar-section">
+    <div class="avatar-preview" id="avatar-preview">
+     ?
+    </div><button class="change-avatar-btn" id="change-avatar-btn"> <span>📷</span> <span id="change-avatar-text">Thay đổi ảnh đại diện</span> </button> <label class="form-label" id="avatar-label" style="margin-top: 8px; text-align: center;">Ảnh đại diện</label>
+   </section>
+  <form id="edit-form" method="post" action="/edit">
+  <div class="form-group"><label class="form-label" for="username" id="username-label">Tên người dùng</label> <input type="text" id="username" class="form-input" value="{{ current_user or user.get('username','') }}" placeholder="Nhập tên người dùng" maxlength="30" disabled>
+     <div class="char-count"><span id="username-count">0</span>/30 ký tự
+     </div>
+    </div>
+  <div class="form-group"><label class="form-label" for="fullname" id="fullname-label">Họ và tên</label> <input type="text" id="fullname" name="full_name" class="form-input" value="{{ user.get('full_name','') }}" placeholder="Nhập họ và tên đầy đủ" maxlength="50">
+     <div class="char-count"><span id="fullname-count">0</span>/50 ký tự
+     </div>
+    </div>
+  <div class="form-group"><label class="form-label" for="bio" id="bio-label">Tiểu sử</label> <textarea id="bio" name="bio" class="form-input" placeholder="Viết vài dòng về bản thân bạn..." maxlength="200">{{ user.get('bio','') }}</textarea>
+     <div class="char-count"><span id="bio-count">0</span>/200 ký tự
+     </div>
+    </div>
+    <div class="form-actions"><button type="button" class="btn btn-secondary" id="cancel-btn"> <span>✕</span> <span id="cancel-button-text">Hủy</span> </button> <button type="submit" class="btn btn-primary" id="save-btn"> <span>✓</span> <span id="save-button-text">Lưu thay đổi</span> </button>
+    </div>
+   </form>
+  </main>
+  <script>
+    const defaultConfig = {
+      background_color: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+      surface_color: "#ffffff",
+      text_color: "#333333",
+      primary_action_color: "#1e88e5",
+      secondary_action_color: "#efefef",
+      font_family: "sans-serif",
+      font_size: 16,
+      page_title: "Chỉnh sửa hồ sơ",
+      username_label: "Tên người dùng",
+      fullname_label: "Họ và tên",
+      bio_label: "Tiểu sử",
+      avatar_label: "Ảnh đại diện",
+      save_button_text: "Lưu thay đổi",
+      cancel_button_text: "Hủy",
+      change_avatar_text: "Thay đổi ảnh đại diện"
+    };
+
+    // Character counting
+    const usernameInput = document.getElementById('username');
+    const fullnameInput = document.getElementById('fullname');
+    const bioInput = document.getElementById('bio');
+    const usernameCount = document.getElementById('username-count');
+    const fullnameCount = document.getElementById('fullname-count');
+    const bioCount = document.getElementById('bio-count');
+
+    function updateCharCount(input, countElement) {
+      countElement.textContent = input.value.length;
+    }
+
+    function updateAvatar() {
+      const avatarPreview = document.getElementById('avatar-preview');
+      const username = usernameInput.value.trim();
+      if (username.length > 0) {
+        avatarPreview.textContent = username.charAt(0).toUpperCase();
+      } else {
+        avatarPreview.textContent = '?';
+      }
+    }
+
+    usernameInput.addEventListener('input', () => {
+      updateCharCount(usernameInput, usernameCount);
+      updateAvatar();
+    });
+    fullnameInput.addEventListener('input', () => updateCharCount(fullnameInput, fullnameCount));
+    bioInput.addEventListener('input', () => updateCharCount(bioInput, bioCount));
+
+    // Initialize counts and avatar
+    updateCharCount(usernameInput, usernameCount);
+    updateCharCount(fullnameInput, fullnameCount);
+    updateCharCount(bioInput, bioCount);
+    updateAvatar();
+
+    // Form submission
+    const editForm = document.getElementById('edit-form');
+    const successMessage = document.getElementById('success-message');
+    const saveBtn = document.getElementById('save-btn');
+
+    // Let the form submit normally to the server (method=POST action=/edit)
+
+    // Cancel button
+    const cancelBtn = document.getElementById('cancel-btn');
+    cancelBtn.addEventListener('click', () => {
+      // Reset form to empty values
+      usernameInput.value = '';
+      fullnameInput.value = '';
+      bioInput.value = '';
+      
+      updateCharCount(usernameInput, usernameCount);
+      updateCharCount(fullnameInput, fullnameCount);
+      updateCharCount(bioInput, bioCount);
+      updateAvatar();
+    });
+
+    // Change avatar button
+    const changeAvatarBtn = document.getElementById('change-avatar-btn');
+    changeAvatarBtn.addEventListener('click', () => {
+      // Show temporary message
+      const originalText = changeAvatarBtn.innerHTML;
+      changeAvatarBtn.innerHTML = '<span>✓</span><span>Tính năng đang phát triển</span>';
+      changeAvatarBtn.style.background = '#4CAF50';
+      changeAvatarBtn.style.color = 'white';
+      changeAvatarBtn.style.borderColor = '#4CAF50';
+
+      setTimeout(() => {
+        changeAvatarBtn.innerHTML = originalText;
+        changeAvatarBtn.style.background = 'transparent';
+        changeAvatarBtn.style.color = '#1e88e5';
+        changeAvatarBtn.style.borderColor = '#1e88e5';
+      }, 2000);
+    });
+
+    async function onConfigChange(config) {
+      const baseSize = config.font_size || defaultConfig.font_size;
+      const customFont = config.font_family || defaultConfig.font_family;
+      const baseFontStack = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif';
+
+      document.body.style.fontFamily = `${customFont}, ${baseFontStack}`;
+      document.body.style.fontSize = `${baseSize}px`;
+
+      const editContainer = document.querySelector('.edit-container');
+      if (editContainer) {
+        editContainer.style.background = config.surface_color || defaultConfig.surface_color;
+      }
+
+      const pageTitle = document.getElementById('page-title');
+      if (pageTitle) {
+        pageTitle.textContent = config.page_title || defaultConfig.page_title;
+        pageTitle.style.color = config.text_color || defaultConfig.text_color;
+        pageTitle.style.fontSize = `${baseSize * 2}px`;
+      }
+
+      const usernameLabel = document.getElementById('username-label');
+      if (usernameLabel) {
+        usernameLabel.textContent = config.username_label || defaultConfig.username_label;
+        usernameLabel.style.fontSize = `${baseSize * 0.875}px`;
+      }
+
+      const fullnameLabel = document.getElementById('fullname-label');
+      if (fullnameLabel) {
+        fullnameLabel.textContent = config.fullname_label || defaultConfig.fullname_label;
+        fullnameLabel.style.fontSize = `${baseSize * 0.875}px`;
+      }
+
+      const bioLabel = document.getElementById('bio-label');
+      if (bioLabel) {
+        bioLabel.textContent = config.bio_label || defaultConfig.bio_label;
+        bioLabel.style.fontSize = `${baseSize * 0.875}px`;
+      }
+
+      const avatarLabel = document.getElementById('avatar-label');
+      if (avatarLabel) {
+        avatarLabel.textContent = config.avatar_label || defaultConfig.avatar_label;
+        avatarLabel.style.fontSize = `${baseSize * 0.875}px`;
+      }
+
+      const saveButtonText = document.getElementById('save-button-text');
+      if (saveButtonText) {
+        saveButtonText.textContent = config.save_button_text || defaultConfig.save_button_text;
+      }
+
+      const cancelButtonText = document.getElementById('cancel-button-text');
+      if (cancelButtonText) {
+        cancelButtonText.textContent = config.cancel_button_text || defaultConfig.cancel_button_text;
+      }
+
+      const changeAvatarText = document.getElementById('change-avatar-text');
+      if (changeAvatarText) {
+        changeAvatarText.textContent = config.change_avatar_text || defaultConfig.change_avatar_text;
+      }
+
+      const primaryBtns = document.querySelectorAll('.btn-primary');
+      primaryBtns.forEach(btn => {
+        btn.style.background = config.primary_action_color || defaultConfig.primary_action_color;
+        btn.style.fontSize = `${baseSize}px`;
+      });
+
+      const secondaryBtns = document.querySelectorAll('.btn-secondary');
+      secondaryBtns.forEach(btn => {
+        btn.style.background = config.secondary_action_color || defaultConfig.secondary_action_color;
+        btn.style.fontSize = `${baseSize}px`;
+      });
+
+      const formInputs = document.querySelectorAll('.form-input');
+      formInputs.forEach(input => {
+        input.style.fontSize = `${baseSize}px`;
+      });
+
+      const formLabels = document.querySelectorAll('.form-label');
+      formLabels.forEach(label => {
+        label.style.color = config.text_color || defaultConfig.text_color;
+        label.style.fontSize = `${baseSize * 0.875}px`;
+      });
+    }
+
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange,
+        mapToCapabilities: (config) => ({
+          recolorables: [
+            {
+              get: () => config.surface_color || defaultConfig.surface_color,
+              set: (value) => {
+                config.surface_color = value;
+                window.elementSdk.setConfig({ surface_color: value });
+              }
+            },
+            {
+              get: () => config.text_color || defaultConfig.text_color,
+              set: (value) => {
+                config.text_color = value;
+                window.elementSdk.setConfig({ text_color: value });
+              }
+            },
+            {
+              get: () => config.primary_action_color || defaultConfig.primary_action_color,
+              set: (value) => {
+                config.primary_action_color = value;
+                window.elementSdk.setConfig({ primary_action_color: value });
+              }
+            },
+            {
+              get: () => config.secondary_action_color || defaultConfig.secondary_action_color,
+              set: (value) => {
+                config.secondary_action_color = value;
+                window.elementSdk.setConfig({ secondary_action_color: value });
+              }
+            }
+          ],
+          borderables: [],
+          fontEditable: {
+            get: () => config.font_family || defaultConfig.font_family,
+            set: (value) => {
+              config.font_family = value;
+              window.elementSdk.setConfig({ font_family: value });
+            }
+          },
+          fontSizeable: {
+            get: () => config.font_size || defaultConfig.font_size,
+            set: (value) => {
+              config.font_size = value;
+              window.elementSdk.setConfig({ font_size: value });
+            }
+          }
+        }),
+        mapToEditPanelValues: (config) => new Map([
+          ["page_title", config.page_title || defaultConfig.page_title],
+          ["username_label", config.username_label || defaultConfig.username_label],
+          ["fullname_label", config.fullname_label || defaultConfig.fullname_label],
+          ["bio_label", config.bio_label || defaultConfig.bio_label],
+          ["avatar_label", config.avatar_label || defaultConfig.avatar_label],
+          ["save_button_text", config.save_button_text || defaultConfig.save_button_text],
+          ["cancel_button_text", config.cancel_button_text || defaultConfig.cancel_button_text],
+          ["change_avatar_text", config.change_avatar_text || defaultConfig.change_avatar_text]
+        ])
+      });
+    }
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99d47683f5c108b4',t:'MTc2MjkzNDA4My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

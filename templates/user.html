@@ -1,0 +1,741 @@
+<!doctype html>
+<html lang="vi">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Profile</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #f5f5f5;
+      height: 100%;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    /* Top Header */
+    .top-header {
+      background: #ffffff;
+      padding: 20px 40px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      font-size: 28px;
+      font-weight: 700;
+      color: #e60023;
+      letter-spacing: -0.5px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 24px;
+    }
+
+    /* Profile Header */
+    .profile-header {
+      background: #ffffff;
+      border-radius: 24px;
+      padding: 48px;
+      margin-bottom: 32px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      text-align: center;
+    }
+
+    .avatar-container {
+      position: relative;
+      display: inline-block;
+      margin-bottom: 24px;
+    }
+
+    .avatar {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 64px;
+      font-weight: 700;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    }
+
+    .avatar-badge {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      width: 40px;
+      height: 40px;
+      background: #4CAF50;
+      border-radius: 50%;
+      border: 4px solid white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .username {
+      font-size: 32px;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    .full-name {
+      font-size: 18px;
+      color: #666;
+      margin-bottom: 16px;
+    }
+
+    .bio {
+      font-size: 16px;
+      color: #555;
+      line-height: 1.6;
+      max-width: 600px;
+      margin: 0 auto 24px;
+    }
+
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 48px;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: 28px;
+      font-weight: 700;
+      color: #333;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .profile-actions {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 14px 32px;
+      border-radius: 24px;
+      border: none;
+      font-weight: 600;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: #e60023;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #d50019;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(230, 0, 35, 0.3);
+    }
+
+    .btn-secondary {
+      background: #efefef;
+      color: #333;
+    }
+
+    .btn-secondary:hover {
+      background: #e0e0e0;
+      transform: translateY(-2px);
+    }
+
+    .btn-logout {
+      background: #f44336;
+      color: white;
+    }
+
+    .btn-logout:hover {
+      background: #d32f2f;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 32px;
+      background: white;
+      padding: 8px;
+      border-radius: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .tab {
+      padding: 12px 32px;
+      border-radius: 12px;
+      border: none;
+      background: transparent;
+      font-weight: 600;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: #666;
+    }
+
+    .tab:hover {
+      background: #f5f5f5;
+      color: #333;
+    }
+
+    .tab.active {
+      background: #333;
+      color: white;
+    }
+
+    /* Gallery Grid */
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .gallery-item {
+      position: relative;
+      border-radius: 16px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.3s;
+      background: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .gallery-item:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    }
+
+    .gallery-image {
+      width: 100%;
+      height: 300px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 64px;
+      color: white;
+    }
+
+    .gallery-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      opacity: 0;
+      transition: opacity 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      color: white;
+      padding: 16px;
+    }
+
+    .gallery-item:hover .gallery-overlay {
+      opacity: 1;
+    }
+
+    .gallery-title {
+      font-weight: 600;
+      font-size: 18px;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+
+    .gallery-stats {
+      display: flex;
+      gap: 16px;
+      font-size: 14px;
+    }
+
+    /* Empty State */
+    .empty-state {
+      background: white;
+      border-radius: 24px;
+      padding: 80px 32px;
+      text-align: center;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+
+    .empty-icon {
+      font-size: 80px;
+      margin-bottom: 24px;
+      opacity: 0.4;
+    }
+
+    .empty-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 12px;
+    }
+
+    .empty-description {
+      font-size: 16px;
+      color: #666;
+      margin-bottom: 32px;
+    }
+
+    /* Logout Confirmation */
+    .logout-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .logout-modal.show {
+      display: flex;
+    }
+
+    .logout-content {
+      background: white;
+      border-radius: 24px;
+      padding: 40px;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    }
+
+    .logout-icon {
+      font-size: 64px;
+      margin-bottom: 24px;
+    }
+
+    .logout-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 12px;
+    }
+
+    .logout-message {
+      font-size: 16px;
+      color: #666;
+      margin-bottom: 32px;
+    }
+
+    .logout-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    @media (max-width: 768px) {
+      .profile-header {
+        padding: 32px 24px;
+      }
+
+      .username {
+        font-size: 24px;
+      }
+
+      .stats {
+        gap: 24px;
+      }
+
+      .gallery-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 12px;
+      }
+
+      .gallery-image {
+        height: 200px;
+        font-size: 48px;
+      }
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+ </head>
+ <body><!-- Top Header -->
+  <header class="top-header">
+   <a class="logo" href="/gallery">Imageshare</a>
+   <button class="btn btn-logout" id="logout-btn-header"> <span>🚪</span> <span id="logout-text-header">Đăng xuất</span> </button>
+  </header>
+  <main class="container"><!-- Profile Header -->
+   <section class="profile-header">
+  <div class="avatar-container">
+   <div class="avatar">
+    {{ (current_user[:2]|upper) if current_user else (profile.get('username','')[:2]|upper if profile.get('username') else 'ND') }}
+   </div>
+   <div class="avatar-badge">
+    ✓
+   </div>
+  </div>
+  <h1 class="username" id="username">{{ current_user or profile.get('username') or 'Người dùng' }}</h1>
+  <p class="full-name" id="full-name">{{ profile.get('full_name','') }}</p>
+  <p class="bio" id="bio">{{ profile.get('bio') if profile and profile.get('bio') else 'Nhấn "Chỉnh sửa hồ sơ" để cập nhật mô tả hồ sơ.' }}</p>
+  <div class="stats">
+   <div class="stat-item"><span class="stat-number" id="uploaded-count">0</span> <span class="stat-label">Ảnh đã đăng</span>
+   </div>
+  </div>
+  <div class="profile-actions"><a class="btn btn-primary" id="upload-btn" href="/upload"> <span>📤</span> <span id="upload-button-text">Tải ảnh lên</span> </a> <a class="btn btn-secondary" id="edit-profile-btn" href="/edit"> <span>✏️</span> <span id="edit-profile-text">Chỉnh sửa hồ sơ</span> </a>
+    </div>
+   </section><!-- Tabs -->
+   <nav class="tabs"><button class="tab active" data-tab="photos">📷 Ảnh của tôi</button> <button class="tab" data-tab="saved">💾 Đã lưu</button>
+   </nav><!-- Content Sections -->
+   <div id="photos-section" class="content-section">
+    <div class="gallery-grid" id="gallery-grid"></div>
+   </div>
+   <div id="saved-section" class="content-section" style="display: none;">
+    <div class="empty-state">
+     <div class="empty-icon">
+      💾
+     </div>
+     <h2 class="empty-title">Chưa có ảnh đã lưu</h2>
+     <p class="empty-description">Các ảnh bạn lưu từ người dùng khác sẽ xuất hiện ở đây</p>
+    </div>
+   </div>
+  </main><!-- Logout Modal -->
+  <div class="logout-modal" id="logout-modal">
+   <div class="logout-content">
+    <div class="logout-icon">
+     👋
+    </div>
+    <h2 class="logout-title">Xác nhận đăng xuất</h2>
+    <p class="logout-message">Bạn có chắc chắn muốn đăng xuất khỏi tài khoản?</p>
+    <div class="logout-actions"><button class="btn btn-secondary" id="cancel-logout">Hủy</button> <button class="btn btn-logout" id="confirm-logout">Đăng xuất</button>
+    </div>
+   </div>
+  </div>
+  <script>
+    const defaultConfig = {
+      background_color: "#f5f5f5",
+      surface_color: "#ffffff",
+      text_color: "#333333",
+      primary_action_color: "#1e88e5",
+      secondary_action_color: "#0d47a1",
+      font_family: "sans-serif",
+      font_size: 16,
+      username: "nguyendung_art",
+      full_name: "Nguyễn Văn Dũng",
+      bio: "Nhiếp ảnh gia & Nghệ sĩ sáng tạo nội dung 📸 | Yêu thích thiên nhiên và kiến trúc 🏛️ | Chia sẻ những khoảnh khắc đẹp mỗi ngày ✨",
+      followers_count: "2,547",
+      following_count: "342",
+      upload_button_text: "Tải ảnh lên",
+      edit_profile_text: "Chỉnh sửa hồ sơ",
+      logout_text: "Đăng xuất"
+    };
+
+    // Load user's images from API and render gallery
+    const CURRENT_USER = "{{ current_user or profile.get('username','') }}";
+
+    async function fetchAndRenderUserImages() {
+      try {
+        const res = await fetch('/api/images');
+        if (!res.ok) throw new Error('Không thể tải ảnh');
+        const images = await res.json();
+        const userImages = images.filter(i => (i.uploader || '') === (CURRENT_USER || ''));
+        const grid = document.getElementById('gallery-grid');
+        grid.innerHTML = '';
+
+        userImages.forEach((img, index) => {
+          const item = document.createElement('div');
+          item.className = 'gallery-item';
+          item.style.animationDelay = `${index * 0.05}s`;
+
+          const imageUrl = img.imageData || (img.filename ? `/uploads/${img.filename}` : '');
+
+          item.innerHTML = `
+            <div class="gallery-image" style="background: linear-gradient(135deg, #ddd 0%, #bbb 100%);">
+              <img src="${imageUrl}" alt="${(img.imageName||'')}" style="width:100%; height:100%; object-fit:cover; display:block;">
+            </div>
+            <div class="gallery-overlay">
+              <div class="gallery-title">${img.imageName || ''}</div>
+              <div class="gallery-stats">
+                <span>📅 ${new Date(img.uploadedAt || img.uploaded_on || '').toLocaleDateString() || ''}</span>
+              </div>
+            </div>
+          `;
+
+          grid.appendChild(item);
+        });
+
+        // update uploaded count
+        const uploadedCount = document.getElementById('uploaded-count');
+        if (uploadedCount) uploadedCount.textContent = String(userImages.length || 0);
+      } catch (err) {
+        console.error('Lỗi khi tải ảnh người dùng:', err);
+      }
+    }
+
+    // Tab switching
+    const tabs = document.querySelectorAll('.tab');
+    const sections = {
+      'photos': document.getElementById('photos-section'),
+      'saved': document.getElementById('saved-section')
+    };
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        const targetTab = tab.dataset.tab;
+        Object.keys(sections).forEach(key => {
+          sections[key].style.display = key === targetTab ? 'block' : 'none';
+        });
+      });
+    });
+
+    // Logout functionality
+    const logoutBtnHeader = document.getElementById('logout-btn-header');
+    const logoutModal = document.getElementById('logout-modal');
+    const cancelLogout = document.getElementById('cancel-logout');
+    const confirmLogout = document.getElementById('confirm-logout');
+
+    logoutBtnHeader.addEventListener('click', () => {
+      logoutModal.classList.add('show');
+    });
+
+    cancelLogout.addEventListener('click', () => {
+      logoutModal.classList.remove('show');
+    });
+
+    confirmLogout.addEventListener('click', () => {
+      logoutModal.classList.remove('show');
+    });
+
+    logoutModal.addEventListener('click', (e) => {
+      if (e.target === logoutModal) {
+        logoutModal.classList.remove('show');
+      }
+    });
+
+    async function onConfigChange(config) {
+      const baseSize = config.font_size || defaultConfig.font_size;
+      const customFont = config.font_family || defaultConfig.font_family;
+      const baseFontStack = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif';
+
+      document.body.style.fontFamily = `${customFont}, ${baseFontStack}`;
+      document.body.style.fontSize = `${baseSize}px`;
+      document.body.style.background = config.background_color || defaultConfig.background_color;
+
+      const profileHeader = document.querySelector('.profile-header');
+      if (profileHeader) {
+        profileHeader.style.background = config.surface_color || defaultConfig.surface_color;
+      }
+
+      const username = document.getElementById('username');
+      if (username) {
+        username.textContent = config.username || defaultConfig.username;
+        username.style.color = config.text_color || defaultConfig.text_color;
+        username.style.fontSize = `${baseSize * 2}px`;
+      }
+
+      const fullName = document.getElementById('full-name');
+      if (fullName) {
+        // Prefer config value if provided; otherwise keep server-rendered value (so saved full_name persists)
+        fullName.textContent = config.full_name || fullName.textContent || defaultConfig.full_name;
+        fullName.style.fontSize = `${baseSize * 1.125}px`;
+        fullName.style.color = config.text_color || defaultConfig.text_color;
+      }
+
+      const bio = document.getElementById('bio');
+      if (bio) {
+        bio.textContent = config.bio || defaultConfig.bio;
+        bio.style.fontSize = `${baseSize}px`;
+      }
+
+      const followersCount = document.getElementById('followers-count');
+      if (followersCount) {
+        followersCount.textContent = config.followers_count || defaultConfig.followers_count;
+        followersCount.style.color = config.text_color || defaultConfig.text_color;
+        followersCount.style.fontSize = `${baseSize * 1.75}px`;
+      }
+
+      const followingCount = document.getElementById('following-count');
+      if (followingCount) {
+        followingCount.textContent = config.following_count || defaultConfig.following_count;
+        followingCount.style.color = config.text_color || defaultConfig.text_color;
+        followingCount.style.fontSize = `${baseSize * 1.75}px`;
+      }
+
+      const uploadButtonText = document.getElementById('upload-button-text');
+      if (uploadButtonText) {
+        uploadButtonText.textContent = config.upload_button_text || defaultConfig.upload_button_text;
+      }
+
+      const editProfileText = document.getElementById('edit-profile-text');
+      if (editProfileText) {
+        editProfileText.textContent = config.edit_profile_text || defaultConfig.edit_profile_text;
+      }
+
+      const logoutTextHeader = document.getElementById('logout-text-header');
+      if (logoutTextHeader) {
+        logoutTextHeader.textContent = config.logout_text || defaultConfig.logout_text;
+      }
+
+      const topHeader = document.querySelector('.top-header');
+      if (topHeader) {
+        topHeader.style.background = config.surface_color || defaultConfig.surface_color;
+      }
+
+      const logo = document.querySelector('.logo');
+      if (logo) {
+        logo.style.color = config.primary_action_color || defaultConfig.primary_action_color;
+      }
+
+      const primaryBtns = document.querySelectorAll('.btn-primary');
+      primaryBtns.forEach(btn => {
+        btn.style.background = config.primary_action_color || defaultConfig.primary_action_color;
+        btn.style.fontSize = `${baseSize}px`;
+      });
+
+      const logoutBtns = document.querySelectorAll('.btn-logout');
+      logoutBtns.forEach(btn => {
+        btn.style.background = config.secondary_action_color || defaultConfig.secondary_action_color;
+        btn.style.fontSize = `${baseSize}px`;
+      });
+
+      const allBtns = document.querySelectorAll('.btn');
+      allBtns.forEach(btn => {
+        btn.style.fontSize = `${baseSize}px`;
+      });
+
+      const tabs = document.querySelectorAll('.tab');
+      tabs.forEach(tab => {
+        tab.style.fontSize = `${baseSize}px`;
+      });
+
+      const statNumbers = document.querySelectorAll('.stat-number');
+      statNumbers.forEach(stat => {
+        stat.style.color = config.text_color || defaultConfig.text_color;
+        stat.style.fontSize = `${baseSize * 1.75}px`;
+      });
+
+      const statLabels = document.querySelectorAll('.stat-label');
+      statLabels.forEach(label => {
+        label.style.fontSize = `${baseSize * 0.875}px`;
+      });
+    }
+
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange,
+        mapToCapabilities: (config) => ({
+          recolorables: [
+            {
+              get: () => config.background_color || defaultConfig.background_color,
+              set: (value) => {
+                config.background_color = value;
+                window.elementSdk.setConfig({ background_color: value });
+              }
+            },
+            {
+              get: () => config.surface_color || defaultConfig.surface_color,
+              set: (value) => {
+                config.surface_color = value;
+                window.elementSdk.setConfig({ surface_color: value });
+              }
+            },
+            {
+              get: () => config.text_color || defaultConfig.text_color,
+              set: (value) => {
+                config.text_color = value;
+                window.elementSdk.setConfig({ text_color: value });
+              }
+            },
+            {
+              get: () => config.primary_action_color || defaultConfig.primary_action_color,
+              set: (value) => {
+                config.primary_action_color = value;
+                window.elementSdk.setConfig({ primary_action_color: value });
+              }
+            },
+            {
+              get: () => config.secondary_action_color || defaultConfig.secondary_action_color,
+              set: (value) => {
+                config.secondary_action_color = value;
+                window.elementSdk.setConfig({ secondary_action_color: value });
+              }
+            }
+          ],
+          borderables: [],
+          fontEditable: {
+            get: () => config.font_family || defaultConfig.font_family,
+            set: (value) => {
+              config.font_family = value;
+              window.elementSdk.setConfig({ font_family: value });
+            }
+          },
+          fontSizeable: {
+            get: () => config.font_size || defaultConfig.font_size,
+            set: (value) => {
+              config.font_size = value;
+              window.elementSdk.setConfig({ font_size: value });
+            }
+          }
+        }),
+        mapToEditPanelValues: (config) => new Map([
+          ["username", config.username || defaultConfig.username],
+          ["full_name", config.full_name || defaultConfig.full_name],
+          ["bio", config.bio || defaultConfig.bio],
+          ["followers_count", config.followers_count || defaultConfig.followers_count],
+          ["following_count", config.following_count || defaultConfig.following_count],
+          ["upload_button_text", config.upload_button_text || defaultConfig.upload_button_text],
+          ["edit_profile_text", config.edit_profile_text || defaultConfig.edit_profile_text],
+          ["logout_text", config.logout_text || defaultConfig.logout_text]
+        ])
+      });
+    }
+
+  // initial load user's images
+  fetchAndRenderUserImages();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99d44df6c4c8b6a7',t:'MTc2MjkzMjQyMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
