@@ -50,6 +50,30 @@ def save_metadata(data):
     with open(METADATA_FILE, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
+
+def add_image_to_user(username, image_entry):
+    """If username exists in users.json, append a minimal image record to users[username]['images']."""
+    if not username:
+        return
+    users = load_users()
+    if username not in users:
+        return
+    user = users.get(username) or {}
+    imgs = user.get('images') or []
+    # store a compact record
+    imgs.append({
+        'id': image_entry.get('id') or image_entry.get('filename'),
+        'filename': image_entry.get('filename'),
+        'imageName': image_entry.get('imageName') or image_entry.get('filename'),
+        'uploadedAt': image_entry.get('uploadedAt') or image_entry.get('uploaded_on')
+    })
+    user['images'] = imgs
+    users[username] = user
+    try:
+        save_users(users)
+    except Exception:
+        app.logger.exception('Failed to save user images')
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXT
 
@@ -118,14 +142,19 @@ def upload():
             filename = f"{name}_{ts}{ext}"
             save_path = os.path.join(UPLOAD_FOLDER, filename)
             file.save(save_path)
-
+            # create an id for this upload so it can be referenced in users.json
+            image_id = datetime.utcnow().strftime('%Y%m%d%H%M%S%f')
             metadata = load_metadata()
-            metadata.append({
+            entry = {
+                'id': image_id,
                 "filename": filename,
                 "uploader": session.get('username', 'Anonymous'),
                 "uploaded_on": datetime.utcnow().isoformat() + 'Z'
-            })
+            }
+            metadata.append(entry)
             save_metadata(metadata)
+            # also add a compact record to the uploader's user entry
+            add_image_to_user(session.get('username'), entry)
             flash('Upload thành công.')
             return redirect(url_for('view_image', filename=filename))
         else:
@@ -179,6 +208,13 @@ def edit_profile():
 @app.route('/uploads/<filename>')
 def uploads(filename):
     return send_from_directory(UPLOAD_FOLDER, filename)
+
+
+# serve the small SDK files expected by the templates
+@app.route('/_sdk/<path:filename>')
+def sdk_files(filename):
+    sdk_dir = os.path.join(BASE_DIR, 'static', '_sdk')
+    return send_from_directory(sdk_dir, filename)
 
 # some templates may reference 'uploaded_file' endpoint
 @app.route('/uploaded/<filename>')
@@ -241,6 +277,11 @@ def api_create_image():
         }
         metadata.append(entry)
         save_metadata(metadata)
+        # also add a compact record to the uploader's user entry
+        try:
+            add_image_to_user(session.get('username'), entry)
+        except Exception:
+            app.logger.exception('Failed to add image to user after API create')
         return jsonify({'isOk': True, 'data': entry})
     except Exception as e:
         app.logger.exception('Failed to save metadata')
@@ -261,6 +302,20 @@ def api_delete_image(image_id):
         except Exception:
             pass
     save_metadata(metadata)
+    # remove from uploader's record if present
+    uploader = entry.get('uploader')
+    if uploader and uploader != 'Anonymous':
+        try:
+            users = load_users()
+            if uploader in users:
+                user = users.get(uploader) or {}
+                imgs = user.get('images') or []
+                imgs = [it for it in imgs if it.get('id') != image_id and it.get('filename') != entry.get('filename')]
+                user['images'] = imgs
+                users[uploader] = user
+                save_users(users)
+        except Exception:
+            app.logger.exception('Failed to remove image reference from user')
     return jsonify({'isOk': True})
 
 
@@ -302,4 +357,3 @@ def diag():
 
 if __name__ == '__main__':
     app.run(debug=True)
-    

@@ -26,6 +26,13 @@
       padding: 16px;
     }
 
+    /* make gradient background scale more pleasing */
+    #app {
+      background-size: 140% 140%;
+      background-position: center top;
+      background-repeat: no-repeat;
+    }
+
     @media (max-width: 1280px) {
       .masonry-grid {
         column-count: 3;
@@ -82,6 +89,12 @@
 
     .filter-btn {
       transition: all 0.3s ease;
+    }
+
+    /* center the filter buttons and make them look balanced */
+    #filterButtons {
+      justify-content: center;
+      align-items: center;
     }
 
     .filter-btn.active {
@@ -166,7 +179,7 @@
   <style>@view-transition { navigation: auto; }</style>
  </head>
  <body>
-  <div id="app" class="min-h-full" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"><!-- Gallery View -->
+  <div id="app" class="min-h-full" style="background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);"><!-- Gallery View -->
    <div id="galleryView"><!-- Header -->
     <header class="bg-white shadow-lg sticky top-0 z-50">
      <div class="container mx-auto px-6 py-6">
@@ -208,7 +221,7 @@
        <div class="relative"><input type="text" id="searchInput" placeholder="🔍 Tìm kiếm hình ảnh..." class="w-full px-6 py-4 border-2 border-gray-300 rounded-full focus:outline-none focus:border-purple-500 transition-colors text-lg">
        </div>
       </div><!-- Filter Buttons -->
-      <div class="flex flex-wrap gap-3" id="filterButtons"><button class="filter-btn active px-6 py-2 rounded-full font-semibold transition-all" data-category="all"> Tất Cả </button> <button class="filter-btn px-6 py-2 rounded-full font-semibold transition-all" data-category="Phong Cảnh"> 🏞️ Phong Cảnh </button> <button class="filter-btn px-6 py-2 rounded-full font-semibold transition-all" data-category="Chân Dung"> 👤 Chân Dung </button> <button class="filter-btn px-6 py-2 rounded-full font-semibold transition-all" data-category="Động Vật"> 🐾 Động Vật </button> <button class="filter-btn px-6 py-2 rounded-full font-semibold transition-all" data-category="Ẩm Thực"> 🍜 Ẩm Thực </button> <button class="filter-btn px-6 py-2 rounded-full font-semibold transition-all" data-category="Kiến Trúc"> 🏛️ Kiến Trúc </button> <button class="filter-btn px-6 py-2 rounded-full font-semibold transition-all" data-category="Nghệ Thuật"> 🎨 Nghệ Thuật </button> <button class="filter-btn px-6 py-2 rounded-full font-semibold transition-all" data-category="Du Lịch"> ✈️ Du Lịch </button> <button class="filter-btn px-6 py-2 rounded-full font-semibold transition-all" data-category="Khác"> 📁 Khác </button>
+  <div class="flex flex-wrap gap-3 justify-center" id="filterButtons"><button class="filter-btn active px-6 py-2 rounded-full font-semibold transition-all" data-category="all"> Tất Cả </button> <button class="filter-btn px-6 py-2 rounded-full font-semibold transition-all" data-category="Phong Cảnh"> 🏞️ Phong Cảnh </button> <button class="filter-btn px-6 py-2 rounded-full font-semibold transition-all" data-category="Chân Dung"> 👤 Chân Dung </button> <button class="filter-btn px-6 py-2 rounded-full font-semibold transition-all" data-category="Động Vật"> 🐾 Động Vật </button> <button class="filter-btn px-6 py-2 rounded-full font-semibold transition-all" data-category="Ẩm Thực"> 🍜 Ẩm Thực </button> <button class="filter-btn px-6 py-2 rounded-full font-semibold transition-all" data-category="Kiến Trúc"> 🏛️ Kiến Trúc </button> <button class="filter-btn px-6 py-2 rounded-full font-semibold transition-all" data-category="Nghệ Thuật"> 🎨 Nghệ Thuật </button> <button class="filter-btn px-6 py-2 rounded-full font-semibold transition-all" data-category="Du Lịch"> ✈️ Du Lịch </button> <button class="filter-btn px-6 py-2 rounded-full font-semibold transition-all" data-category="Khác"> 📁 Khác </button>
       </div>
      </div>
     </header><!-- Gallery Grid -->
@@ -322,7 +335,8 @@
       page_title: "🖼️ Gallery Hình Ảnh",
       search_placeholder: "🔍 Tìm kiếm hình ảnh...",
       empty_message: "Chưa có hình ảnh nào được tải lên",
-      background_color: "#667eea",
+      background_color: "#0f172a",
+      background_end: "#1e293b",
       header_color: "#ffffff",
       text_color: "#1f2937",
       button_active_color: "#8b5cf6",
@@ -386,7 +400,12 @@
       }
 
       if (app) {
-        app.style.background = `linear-gradient(135deg, ${config.background_color || defaultConfig.background_color} 0%, #764ba2 100%)`;
+        const start = config.background_color || defaultConfig.background_color;
+        const end = config.background_end || defaultConfig.background_end;
+        app.style.background = `linear-gradient(135deg, ${start} 0%, ${end} 100%)`;
+        // subtle background sizing for better feel
+        app.style.backgroundSize = '140% 140%';
+        app.style.backgroundPosition = 'center top';
       }
 
       if (header) {
@@ -429,6 +448,13 @@
               set: (value) => {
                 config.background_color = value;
                 window.elementSdk.setConfig({ background_color: value });
+              }
+            },
+            {
+              get: () => config.background_end || defaultConfig.background_end,
+              set: (value) => {
+                config.background_end = value;
+                window.elementSdk.setConfig({ background_end: value });
               }
             },
             {
