@@ -12,8 +12,6 @@ app.secret_key = 'change-me-locally-123'  # đổi nếu cần
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'static', 'uploads')
-METADATA_FILE = os.path.join(UPLOAD_FOLDER, 'metadata.json')
-USERS_FILE = os.path.join(BASE_DIR, 'users.json')
 ALLOWED_EXT = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -94,27 +92,9 @@ def save_metadata(data):
             print(f"Error saving to MySQL: {e}")
 
 def add_image_to_user(username, image_entry):
-    """If username exists in users.json, append a minimal image record to users[username]['images']."""
-    if not username:
-        return
-    users = load_users()
-    if username not in users:
-        return
-    user = users.get(username) or {}
-    imgs = user.get('images') or []
-    # store a compact record
-    imgs.append({
-        'id': image_entry.get('id') or image_entry.get('filename'),
-        'filename': image_entry.get('filename'),
-        'imageName': image_entry.get('imageName') or image_entry.get('filename'),
-        'uploadedAt': image_entry.get('uploadedAt') or image_entry.get('uploaded_on')
-    })
-    user['images'] = imgs
-    users[username] = user
-    try:
-        save_users(users)
-    except Exception:
-        app.logger.exception('Failed to save user images')
+    # This function is no longer needed since we're using MySQL
+    # Can be removed or kept empty
+    pass
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXT

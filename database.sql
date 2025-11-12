@@ -1,1 +1,0 @@
-	SELECT * FROM flask_image_sharing.images;
