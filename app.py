@@ -4,6 +4,8 @@ import os, json
 from datetime import datetime
 import base64
 import re
+from database import db
+import mysql.connector
 
 app = Flask(__name__)
 app.secret_key = 'change-me-locally-123'  # đổi nếu cần
@@ -18,38 +20,78 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # --- helper: users ---
 def load_users():
-    if not os.path.exists(USERS_FILE):
-        with open(USERS_FILE, 'w', encoding='utf-8') as f:
-            json.dump({}, f)
-        return {}
     try:
-        with open(USERS_FILE, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except Exception:
+        cursor = db.connection.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM users")
+        users = {}
+        for user in cursor.fetchall():
+            users[user['username']] = {
+                'password': user['password'],
+                'full_name': user['full_name'],
+                'bio': user['bio']
+            }
+        cursor.close()
+        return users
+    except Exception as e:
+        print(f"Error loading users: {e}")
         return {}
 
-def save_users(data):
-    with open(USERS_FILE, 'w', encoding='utf-8') as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+def save_user(username, password, full_name='', bio=''):
+    try:
+        cursor = db.connection.cursor()
+        cursor.execute("""
+            INSERT INTO users (username, password, full_name, bio) 
+            VALUES (%s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE 
+            password=%s, full_name=%s, bio=%s
+        """, (username, password, full_name, bio, password, full_name, bio))
+        db.connection.commit()
+        cursor.close()
+        return True
+    except Exception as e:
+        print(f"Error saving user: {e}")
+        return False
 
 # --- helper: metadata ---
 def load_metadata():
-    if not os.path.exists(METADATA_FILE):
-        with open(METADATA_FILE, 'w', encoding='utf-8') as f:
-            json.dump([], f, ensure_ascii=False, indent=2)
-        return []
     try:
-        with open(METADATA_FILE, 'r', encoding='utf-8') as f:
-            return json.load(f) or []
-    except Exception:
-        with open(METADATA_FILE, 'w', encoding='utf-8') as f:
-            json.dump([], f, ensure_ascii=False, indent=2)
+        cursor = db.connection.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM images ORDER BY uploaded_at DESC")
+        images = []
+        for img in cursor.fetchall():
+            images.append({
+                'id': img['id'],
+                'filename': img['filename'],
+                'imageName': img['image_name'],
+                'uploader': img['uploader'],
+                'uploaded_on': img['uploaded_at'].isoformat() + 'Z' if img['uploaded_at'] else ''
+            })
+        cursor.close()
+        return images
+    except Exception as e:
+        print(f"Error loading images: {e}")
         return []
 
 def save_metadata(data):
-    with open(METADATA_FILE, 'w', encoding='utf-8') as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
-
+    # Save last item to MySQL
+    if data:
+        last_item = data[-1]
+        try:
+            cursor = db.connection.cursor()
+            cursor.execute("""
+                INSERT INTO images (id, filename, image_name, image_category, uploader)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (
+                last_item['id'],
+                last_item['filename'],
+                last_item.get('imageName', ''),
+                last_item.get('imageCategory', ''),
+                last_item['uploader']
+            ))
+            db.connection.commit()
+            cursor.close()
+        except Exception as e:
+            print(f"Error saving to MySQL: {e}")
 
 def add_image_to_user(username, image_entry):
     """If username exists in users.json, append a minimal image record to users[username]['images']."""
@@ -94,15 +136,13 @@ def register():
         if not username or not password:
             flash('Vui lòng nhập username và password.')
             return redirect(url_for('register'))
-        users = load_users()
-        if username in users:
-            flash('Username đã tồn tại.')
+        if save_user(username, password):
+            session['username'] = username
+            flash('Đã đăng ký và đăng nhập.')
+            return redirect(url_for('gallery'))
+        else:
+            flash('Username đã tồn tại hoặc có lỗi khi đăng ký.')
             return redirect(url_for('register'))
-        users[username] = {'password': password}
-        save_users(users)
-        session['username'] = username
-        flash('Đã đăng ký và đăng nhập.')
-        return redirect(url_for('gallery'))
     return render_template('register.html')
 
 @app.route('/login', methods=['GET','POST'])
@@ -197,11 +237,10 @@ def edit_profile():
     if request.method == 'POST':
         full_name = (request.form.get('full_name') or '').strip()
         bio = (request.form.get('bio') or '').strip()
-        user['full_name'] = full_name
-        user['bio'] = bio
-        users[username] = user
-        save_users(users)
-        flash('Đã cập nhật hồ sơ.')
+        if save_user(username, user.get('password', ''), full_name, bio):
+            flash('Đã cập nhật hồ sơ.')
+        else:
+            flash('Có lỗi khi cập nhật hồ sơ.')
         return redirect(url_for('user_page'))
     return render_template('edit.html', user=user)
 
